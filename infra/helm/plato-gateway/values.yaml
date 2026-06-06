@@ -1,0 +1,55 @@
+replicaCount: 1
+
+image:
+  repository: plato-gateway
+  tag: dev
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""           # If empty, uses the chart-generated name. Override in prod with the IRSA-bound one.
+  annotations: {}    # In prod, set eks.amazonaws.com/role-arn here
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: ""
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  hostnames: []
+  rules: []
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+networkPolicy:
+  enabled: false
+
+env: []  # List of {name, value} or {name, valueFrom: {...}}

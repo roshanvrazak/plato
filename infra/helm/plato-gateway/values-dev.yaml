@@ -1,0 +1,14 @@
+replicaCount: 1
+
+image:
+  repository: 123456789012.dkr.ecr.eu-west-2.amazonaws.com/plato-gateway   # your account
+  tag: dev
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - paths:
+        - path: /
+          pathType: Prefix
