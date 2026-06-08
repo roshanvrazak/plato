@@ -12,3 +12,4 @@ opentelemetry-instrumentation-fastapi==0.48b0
 opentelemetry-instrumentation-httpx==0.48b0
 opentelemetry-instrumentation-asyncpg==0.48b0
 structlog==24.4.0
+redis==5.0.8
