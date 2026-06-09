@@ -6,6 +6,11 @@ from . import db, llm
 from .auth import Tenant, require_tenant
 from .rate_limit import limiter
 from .observability import setup_observability, log
+from decimal import Decimal
+from .budget import check_budget
+from .pricing import estimate_cost_pence
+
+
 
 
 @asynccontextmanager
@@ -54,6 +59,32 @@ async def chat_completions(body: dict, tenant: Tenant = Depends(require_tenant))
                     "bucket": result.bucket,
                     "tokens_remaining": result.tokens_remaining,
                     "retry_after_seconds": round(result.retry_after_seconds, 2),
+                }
+            },
+        )
+
+
+
+    # Budget check
+    model = body.get("model", "")
+    msg_chars = sum(len(m.get("content", "")) for m in body.get("messages", []))
+    est_input_tokens = max(1, msg_chars // 4)
+    max_out_tokens = body.get("max_tokens", 512)
+    est_cost = estimate_cost_pence(model, est_input_tokens, max_out_tokens)
+
+    bc = await check_budget(tenant, est_cost)
+    if not bc.allowed:
+        return JSONResponse(
+            status_code=429,
+            headers={"Retry-After": str(bc.retry_after_seconds)},
+            content={
+                "error": {
+                    "type": "daily_budget_exceeded",
+                    "reason": "budget_exhausted",
+                    "spent_today_pence": float(bc.spent_today_pence),
+                    "budget_pence": float(bc.budget_pence),
+                    "estimated_cost_pence": float(bc.estimated_cost_pence),
+                    "retry_after_seconds": bc.retry_after_seconds,
                 }
             },
         )
